@@ -34,4 +34,4 @@ for more info about available arguments.
 * Yolo9kModel - YOLO model trained to recognize more than 9000 classes.
 * Yolo2Model - YOLO-coco model with 80 classes and pretty good accuracy.
 
-Yolo2Model is used by default but this behavior can be changed by passing _--model-name_ argument.
+Yolo2Model is used by default but this behavior can be changed by passing _--model_name_ argument.
