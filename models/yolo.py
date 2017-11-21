@@ -19,51 +19,56 @@ from models.base import BaseModel
 from utils import yolo, general
 
 
+FLAGS = tf.flags.FLAGS
+
+
+tf.flags.DEFINE_float('score_threshold', .3, 'Score threshold.')
+tf.flags.DEFINE_float('iou_threshold', .4, 'Intersection over union threshold.')
+
+
 class YoloBaseModel(BaseModel):
     """Yolo base model class."""
 
+    _checkpoint_path = None
+    _names_path = None
     _anchors = None
-    _labels = None
+    labels = None
 
-    def __init__(self, input_shape, checkpoint_path, score_threshold=.3,
-                 iou_threshold=.4):
-        self._checkpoint_path = checkpoint_path
+    def __init__(self, input_shape):
         self._meta_graph_location = self._checkpoint_path+'.meta'
         self._input_shape = input_shape
 
-        self._score_threshold = score_threshold
-        self._iou_threshold = iou_threshold
+        self._score_threshold = FLAGS.score_threshold
+        self._iou_threshold = FLAGS.iou_threshold
         self._sess = None
+        self._raw_inp = None
+        self._raw_out = None
+        self._eval_inp = None
         self._eval_ops = None
 
         self.colors = None
 
-    @property
-    def anchors(self):
-        if self._anchors is None:
-            raise AttributeError(
-                '"{}" must define "_anchors"'.format(self.__class__.__name__))
-        return self._anchors
-
-    @property
-    def labels(self):
-        if self._labels is None:
-            raise AttributeError(
-                '"{}" must define "_labels"'.format(self.__class__.__name__))
-        return self._labels
-
     def _evaluate(self, matrix):
-        raw_inp = self._sess.graph.get_tensor_by_name('normalization/input:0')
-        out = self._sess.graph.get_tensor_by_name('normalization/output:0')
-        eval_inp = self._sess.graph.get_tensor_by_name('evaluation/input:0')
-
         # TODO: We can merge normalization with other OPs, but we need to
         # redefine input tensor for this. Anyway this works faster then
-        # normalizing input data with python.
-        normalized = self._sess.run(out, feed_dict={raw_inp: matrix})
-        return self._sess.run(self._eval_ops, feed_dict={eval_inp: normalized})
+        # normalizing input data with python or openCV or numpy.
+        normalized = self._sess.run(self._raw_out,
+                                    feed_dict={self._raw_inp: matrix})
+        return self._sess.run(self._eval_ops,
+                              feed_dict={self._eval_inp: normalized})
 
     def init(self):
+        if bool(self.labels) == bool(self._names_path):
+            raise AttributeError(
+                'Model must define either "labels" or "names path" not both.')
+
+        if self._names_path:
+            with open(self._names_path) as f:
+                self.labels = f.read().splitlines()
+
+        if not self._anchors:
+            raise AttributeError('Model must define "_anchors".')
+
         self._sess = tf.Session()
         self.colors = general.generate_colors(len(self.labels))
 
@@ -77,17 +82,22 @@ class YoloBaseModel(BaseModel):
         eval_out = self._sess.graph.get_tensor_by_name('evaluation/output:0')
         
         with tf.name_scope('normalization'):
-            inp = tf.placeholder(tf.float32, self._input_shape, name='input')
-            inp = tf.image.resize_images(inp, eval_inp.get_shape()[1:3])
+            raw_inp = tf.placeholder(tf.float32, self._input_shape,
+                                     name='input')
+            inp = tf.image.resize_images(raw_inp, eval_inp.get_shape()[1:3])
             inp = tf.expand_dims(inp, 0)
-            tf.divide(inp, 255., name='output')
+            raw_out = tf.divide(inp, 255., name='output')
 
         with tf.name_scope('postprocess'):
-            outputs = yolo.head(eval_out, self.anchors, len(self.labels))
+            outputs = yolo.head(eval_out, self._anchors, len(self.labels))
             self._eval_ops = yolo.evaluate(
                 outputs, self._input_shape[0:2],
                 score_threshold=self._score_threshold,
                 iou_threshold=self._iou_threshold)
+
+        self._raw_inp = raw_inp
+        self._raw_out = raw_out
+        self._eval_inp = eval_inp
 
         self._sess.run(tf.global_variables_initializer())
 
@@ -95,9 +105,8 @@ class YoloBaseModel(BaseModel):
         self._sess.close()
 
     def evaluate(self, matrix):
-        boxes, scores, classes = self._evaluate(matrix)
         objects = []
-        for num, box in enumerate(boxes):
+        for box, score, class_id in zip(*self._evaluate(matrix)):
             top, left, bottom, right = box
             objects.append({
                 'box': {
@@ -106,26 +115,24 @@ class YoloBaseModel(BaseModel):
                     'bottom': bottom,
                     'right': right
                 },
-                'score': scores[num],
-                'class': classes[num],
-                'class_name': self.labels[classes[num]],
-                'color': self.colors[classes[num]]
+                'score': score,
+                'class': class_id,
+                'class_name': self.labels[class_id],
+                'color': self.colors[class_id]
             })
         return objects
 
 
 class Yolo9kModel(YoloBaseModel):
 
+    _checkpoint_path = 'data/yolo9k/yolo9000_model.ckpt'
+    _names_path = 'data/yolo9k/yolo9k.names'
     _anchors = [[0.77871, 1.14074], [3.00525, 4.31277], [9.22725, 9.61974]]
 
-    def __init__(self, *args, **kwargs):
-        kwargs.setdefault('checkpoint_path', 'data/yolo9k/yolo9000_model.ckpt')
-        self._names_path = kwargs.pop('names_path', 'data/yolo9k/yolo9k.names')
 
-        super(Yolo9kModel, self).__init__(*args, **kwargs)
+class Yolo2Model(YoloBaseModel):
 
-    def init(self):
-        with open(self._names_path) as f:
-            self._labels = f.read().splitlines()
-
-        super(Yolo9kModel, self).init()
+    _checkpoint_path = 'data/yolo2/yolo_model.ckpt'
+    _names_path = 'data/yolo2/yolo2.names'
+    _anchors = [[0.57273, 0.677385], [1.87446, 2.06253], [3.33843, 5.47434],
+                [7.88282, 3.52778], [9.77052, 9.16828]]

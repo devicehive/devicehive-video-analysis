@@ -28,3 +28,12 @@ def generate_colors(n, max_value=255):
         colors.append([c*max_value for c in colorsys.hls_to_rgb(h, l, s)])
 
     return colors
+
+
+def format_predictions(predicts):
+    return ', '.join('{class_name}: {score:.2f}'.format(**p) for p in predicts)
+
+
+def find_class_by_name(name, modules):
+    modules = [getattr(module, name, None) for module in modules]
+    return next(a for a in modules if a)
