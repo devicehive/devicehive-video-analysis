@@ -33,5 +33,10 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': False
         },
+        'dh_webconfig': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False
+        },
     }
 }

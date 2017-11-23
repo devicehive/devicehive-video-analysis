@@ -82,6 +82,7 @@ def evaluate(_):
             fps = fps * 0.9 + 1/(end_time - start_time) * 0.1
             start_time = end_time
 
+            # Draw additional info
             frame_info = 'Frame: {0}, FPS: {1:.2f}'.format(frame_num, fps)
             cv2.putText(frame, frame_info, (10, frame.shape[0]-10),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
