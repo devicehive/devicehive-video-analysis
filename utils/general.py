@@ -14,19 +14,20 @@
 
 
 import colorsys
-import random
 from six.moves.urllib.parse import urlparse
+
+
+GOLDEN_RATIO = 0.618033988749895
 
 
 def generate_colors(n, max_value=255):
     colors = []
-    base = 2 / n
-
+    h = 0.1
+    s = 0.5
+    v = 0.95
     for i in range(n):
-        h = i * base
-        s = 1 - h
-        l = 0.5 + (random.random() - 0.5) / 5
-        colors.append([c*max_value for c in colorsys.hls_to_rgb(h, l, s)])
+        h = 1 / (h + GOLDEN_RATIO)
+        colors.append([c*max_value for c in colorsys.hsv_to_rgb(h, s, v)])
 
     return colors
 
