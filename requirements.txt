@@ -1,0 +1,6 @@
+tensorflow-gpu==1.4.0
+devicehive==2.1.1
+-e git://github.com/devicehive/devicehive-python-webconfig.git@a792db1babcedb5baa68ec6ba6ebcf0041f20469#egg=devicehive_webconfig
+six==1.11.0
+pafy==0.5.3.1
+youtube-dl==2017.11.15

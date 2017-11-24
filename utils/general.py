@@ -15,6 +15,7 @@
 
 import colorsys
 import random
+from six.moves.urllib.parse import urlparse
 
 
 def generate_colors(n, max_value=255):
@@ -37,3 +38,11 @@ def format_predictions(predicts):
 def find_class_by_name(name, modules):
     modules = [getattr(module, name, None) for module in modules]
     return next(a for a in modules if a)
+
+
+def is_url(path):
+    try:
+        result = urlparse(path)
+        return result.scheme and result.netloc and result.path
+    except:
+        return False

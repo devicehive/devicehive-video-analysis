@@ -13,14 +13,15 @@
 # limitations under the License.
 
 
-import cv2
 import time
 import logging.config
+import cv2
+import pafy
 import tensorflow as tf
 
 from models import yolo
 from log_config import LOGGING
-from utils.general import format_predictions, find_class_by_name
+from utils.general import format_predictions, find_class_by_name, is_url
 
 logging.config.dictConfig(LOGGING)
 
@@ -32,7 +33,13 @@ def evaluate(_):
     win_name = 'Detector'
     cv2.namedWindow(win_name)
 
-    cam = cv2.VideoCapture(FLAGS.video)
+    video = FLAGS.video
+
+    if is_url(video):
+        videoPafy = pafy.new(video)
+        video = videoPafy.getbest(preftype="mp4").url
+
+    cam = cv2.VideoCapture(video)
     if not cam.isOpened():
         raise IOError('Can\'t open "{}"'.format(FLAGS.video))
 
@@ -51,8 +58,8 @@ def evaluate(_):
             ret, frame = cam.read()
 
             if not ret:
-                logger.warning('Can\'t read video data')
-                continue
+                logger.info('Can\'t read video data. Potential end of stream')
+                return
 
             predictions = model.evaluate(frame)
 
