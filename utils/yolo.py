@@ -110,6 +110,7 @@ def evaluate(yolo_outputs, image_shape, max_boxes=10, score_threshold=.6,
                                           threshold=score_threshold)
 
     # Scale boxes back to original image shape.
+    image_shape = tf.cast(image_shape, tf.float32)
     image_dims = tf.concat([image_shape, image_shape], axis=0)
     image_dims = tf.expand_dims(image_dims, 0)
     boxes = boxes * image_dims
