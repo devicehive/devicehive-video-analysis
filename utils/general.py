@@ -18,6 +18,7 @@ from six.moves.urllib.parse import urlparse
 
 
 GOLDEN_RATIO = 0.618033988749895
+NOTIFICATION_KEYS = ('class_name', 'score')
 
 
 def generate_colors(n, max_value=255):
@@ -35,6 +36,13 @@ def generate_colors(n, max_value=255):
 def format_predictions(predicts):
     return ', '.join('{class_name}: {score:.2f}'.format(**p) for p in predicts)
 
+
+def format_notification(predicts):
+    result = []
+    for p in predicts:
+        result.append({key: p[key] for key in NOTIFICATION_KEYS})
+
+    return result
 
 def find_class_by_name(name, modules):
     modules = [getattr(module, name, None) for module in modules]

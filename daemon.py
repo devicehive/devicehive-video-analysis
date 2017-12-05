@@ -21,7 +21,7 @@ import logging.config
 from dh_webconfig import Server, Handler
 
 from models.yolo import Yolo2Model
-from utils.general import format_predictions
+from utils.general import format_predictions, format_notification
 from web.routes import routes
 from log_config import LOGGING
 
@@ -128,8 +128,8 @@ class Daemon(Server):
 
                 if predictions:
                     formatted = format_predictions(predictions)
-                    self._send_dh(predictions)
                     logger.info('Predictions: {}'.format(formatted))
+                    self._send_dh(format_notification(predictions))
 
                 frame_num += 1
 
