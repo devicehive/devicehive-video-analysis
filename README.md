@@ -45,13 +45,6 @@ python eval.py --help
 ``` 
 for more info about available arguments.
 
-Currently there are two supported models:
-* Yolo9kModel - YOLO model trained to recognize more than 9000 classes.
-* Yolo2Model - YOLO-coco model with 80 classes and pretty good accuracy.
-
-Yolo2Model is used by default but this behavior can be changed by passing _--model_name_ argument.
-
-
 ### Web based demo
 There is demo with web interface and devicehive integration.
 It will capture video stream from your web cam, evaluate it and send predictions to devicehive.
