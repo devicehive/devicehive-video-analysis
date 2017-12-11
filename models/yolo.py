@@ -123,13 +123,6 @@ class YoloBaseModel(BaseModel):
         return objects
 
 
-class Yolo9kModel(YoloBaseModel):
-
-    _checkpoint_path = 'data/yolo9k/yolo9000_model.ckpt'
-    _names_path = 'data/yolo9k/yolo9k.names'
-    _anchors = [[0.77871, 1.14074], [3.00525, 4.31277], [9.22725, 9.61974]]
-
-
 class Yolo2Model(YoloBaseModel):
 
     _checkpoint_path = 'data/yolo2/yolo_model.ckpt'
