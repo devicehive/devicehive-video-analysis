@@ -11,9 +11,11 @@
 * pafy (for direct video links)
 * youtube-dl (for direct video links from [youtube](https://www.youtube.com))
 
-All requirements are listed in [requirements](requirements.txt) file, except _openCV_ (because of video support described [here](https://pypi.python.org/pypi/opencv-python#frequently-asked-questions), [here](https://github.com/skvark/opencv-python/issues/49) and [here](https://github.com/skvark/opencv-python/issues/50))
+All requirements are listed in [requirements](requirements.txt) file, ~~except _openCV_ (because of video support described [here](https://pypi.python.org/pypi/opencv-python#frequently-asked-questions), [here](https://github.com/skvark/opencv-python/issues/49) and [here](https://github.com/skvark/opencv-python/issues/50))~~
 
-So (almost) all required packages can be installed by _pip_
+So ~~(almost)~~ all required packages can be installed by _pip_
+
+**Update:** Since [this](https://github.com/skvark/opencv-python/releases/tag/11) release opencv-python ships with FFmpeg, V4L and V4L2. So i have added it to [requirements](requirements.txt).
 ```bash
 pip install -r requirements.txt
 ```
