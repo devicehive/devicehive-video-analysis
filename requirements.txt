@@ -1,7 +1,7 @@
 tensorflow==1.4.0
 opencv-contrib-python==3.4.0.12
 devicehive==2.1.3
--e git://github.com/devicehive/devicehive-python-webconfig.git@a792db1babcedb5baa68ec6ba6ebcf0041f20469#egg=devicehive_webconfig
+devicehive-webconfig==1.0.2
 six==1.11.0
 pafy==0.5.3.1
 youtube-dl==2017.11.15

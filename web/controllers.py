@@ -15,7 +15,7 @@
 
 import time
 from six.moves import http_client
-from dh_webconfig.base import Controller, BaseController
+from devicehive_webconfig.base import Controller, BaseController
 
 
 class Events(Controller):

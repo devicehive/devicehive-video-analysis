@@ -18,7 +18,7 @@ import json
 import time
 import threading
 import logging.config
-from dh_webconfig import Server, Handler
+from devicehive_webconfig import Server, Handler
 
 from models.yolo import Yolo2Model
 from utils.general import format_predictions, format_notification
