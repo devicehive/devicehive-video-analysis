@@ -2,3 +2,6 @@
 __pycache__
 .idea
 /data
+
+data.tar.gz
+dh_config.json
