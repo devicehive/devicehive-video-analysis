@@ -39,7 +39,7 @@ def evaluate(_):
         videoPafy = pafy.new(video)
         video = videoPafy.getbest(preftype="mp4").url
 
-    cam = cv2.VideoCapture(video)
+    cam = cv2.VideoCapture(0)
     if not cam.isOpened():
         raise IOError('Can\'t open "{}"'.format(FLAGS.video))
 
@@ -120,7 +120,7 @@ def evaluate(_):
 
 
 if __name__ == '__main__':
-    tf.flags.DEFINE_string('video', 0, 'Path to the video file.')
+    tf.flags.DEFINE_string('video', '0', 'Path to the video file.')
     tf.flags.DEFINE_string('model_name', 'Yolo2Model', 'Model name to use.')
 
     tf.app.run(main=evaluate)
