@@ -56,3 +56,9 @@ python daemon.py
 ```
 and go to http://127.0.0.1:8000 to configure devicehive connection.
 Video stream is available on http://127.0.0.1:8000/events/
+
+### Tested Tensorflow version
+1. Tensorflow=1.4.0
+2. Tensorflow=1.9.0
+3. Tensorflow=1.12.0 (GPU version, cuda100=1.0, cudatoolkit=9.0)
+
