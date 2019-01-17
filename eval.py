@@ -38,8 +38,10 @@ def evaluate(_):
     if is_url(video):
         videoPafy = pafy.new(video)
         video = videoPafy.getbest(preftype="mp4").url
-
-    cam = cv2.VideoCapture(0)
+        cam = cv2.VideoCapture(video)
+    else:
+        cam = cv2.VideoCapture(0)
+		
     if not cam.isOpened():
         raise IOError('Can\'t open "{}"'.format(FLAGS.video))
 
