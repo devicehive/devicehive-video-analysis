@@ -18,10 +18,11 @@ import json
 import time
 import threading
 import logging.config
+from Tkinter import *
 from devicehive_webconfig import Server, Handler
 
 from models.yolo import Yolo2Model
-from utils.general import format_predictions, format_notification
+from utils.general import format_predictions, format_notification, format_person_prediction
 from web.routes import routes
 from log_config import LOGGING
 
@@ -31,10 +32,12 @@ logger = logging.getLogger('detector')
 
 
 class DeviceHiveHandler(Handler):
+
     _device = None
 
     def handle_connect(self):
         self._device = self.api.put_device(self._device_id)
+        self._device.send_notification("Begin", {"Initial":"start"})
         super(DeviceHiveHandler, self).handle_connect()
 
     def send(self, data):
@@ -46,7 +49,7 @@ class DeviceHiveHandler(Handler):
             except TypeError:
                 notification = str(data)
 
-        self._device.send_notification(notification)
+        self._device.send_notification("predictions", {"notifications":notification})
 
 
 class Daemon(Server):
@@ -55,12 +58,14 @@ class Daemon(Server):
     _detect_frame_data = None
     _detect_frame_data_id = None
     _cam_thread = None
+    _surgery_meta = None
 
     def __init__(self, *args, **kwargs):
         super(Daemon, self).__init__(*args, **kwargs)
         self._detect_frame_data_id = 0
         self._cam_thread = threading.Thread(target=self._cam_loop, name='cam')
         self._cam_thread.setDaemon(True)
+        # self._surgery_meta = initialData
 
     def _on_startup(self):
         self._cam_thread.start()
@@ -129,7 +134,7 @@ class Daemon(Server):
                 if predictions:
                     formatted = format_predictions(predictions)
                     logger.info('Predictions: {}'.format(formatted))
-                    self._send_dh(format_notification(predictions))
+                    self._send_dh(format_person_prediction(predictions))
 
                 frame_num += 1
 
@@ -141,13 +146,125 @@ class Daemon(Server):
         if not self.dh_status.connected:
             logger.error('Devicehive is not connected')
             return
-
+        print("sending")
         self.deviceHive.handler.send(data)
 
     def get_frame(self):
         return self._detect_frame_data, self._detect_frame_data_id
 
 
+class Widget():
+    
+    # self.hospital_field = None
+    # self.doctor_field = None
+    # self.patient_field = None
+    # self.procedure_field = None
+    # self.instrument_packets_field = None
+
+    def __init__(self):
+        # self.server = None
+
+        self.window = Tk()
+        self.window.title("Assist-MD Capture")
+        self.window.geometry('500x200')
+
+        self.hospital_field = "Memorial Hospital"
+        self.doctor_field = "Dr. Humphreys"
+        self.patient_field = "David Roster"
+        self.procedure_field = "Appendectomy"
+        self.instrument_packets_field = 1
+
+        self.hospital_lbl = Label(self.window, text="Hospital Name: ")
+        self.hospital_lbl.grid(column=0, row=0)
+        v = StringVar(self.window, value=self.hospital_field)
+        self.hospital_txt = Entry(self.window,textvariable=v,width=20)
+        self.hospital_txt.grid(column=1, row=0)
+
+        self.doctor_lbl = Label(self.window, text="Doctor's Name: ")
+        self.doctor_lbl.grid(column=0, row=1)
+        v = StringVar(self.window, value=self.doctor_field)
+        self.doctor_txt = Entry(self.window,textvariable=v,width=20)
+        self.doctor_txt.grid(column=1, row=1)
+
+        self.patient_lbl = Label(self.window, text="Patient's Name: ")
+        self.patient_lbl.grid(column=0, row=2)
+        v = StringVar(self.window, value=self.patient_field)
+        self.patient_txt = Entry(self.window,textvariable=v,width=20)
+        self.patient_txt.grid(column=1, row=2)
+
+        self.procedure_lbl = Label(self.window, text="Procedure: ")
+        self.procedure_lbl.grid(column=0, row=3)
+        v = StringVar(self.window, value=self.procedure_field)
+        self.procedure_txt = Entry(self.window,textvariable=v,width=20)
+        self.procedure_txt.grid(column=1, row=3)
+
+        self.instruments_lbl = Label(self.window, text="Number of Packets: ")
+        self.instruments_lbl.grid(column=0, row=4)
+        v = StringVar(self.window, value=self.instrument_packets_field)
+        self.instruments_txt = Entry(self.window,textvariable=v,width=20)
+        self.instruments_txt.grid(column=1, row=4)
+
+        self.startButtonState = ACTIVE
+        self.stopButtonState = DISABLED
+        
+        self.start_btn = Button(
+            self.window, 
+            text="Start Capture", 
+            command=self.startClicked,
+            state=self.startButtonState)
+        self.start_btn.grid(column=2, row=0)
+
+        self.stop_btn = Button(
+            self.window, 
+            text="Stop Capture", 
+            command=self.stopClicked,
+            state=self.stopButtonState)
+        self.stop_btn.grid(column=2, row=1)
+
+    def startClicked(self):
+        print("starting server")
+        self.hospital_field = self.hospital_txt.get()
+        self.doctor_field = self.doctor_txt.get()
+        self.patient_field = self.patient_txt.get()
+        self.procedure_field = self.patient_txt.get()
+        self.instrument_packets_field = self.instruments_txt.get()
+
+        Initial = {
+            "type": "start",
+            "data": {
+                "hospital": self.hospital_field,
+                "doctor": self.doctor_field,
+                "patient": self.patient_field,
+                "procedure": self.procedure_field,
+                "packets": self.instrument_packets_field
+            }
+        }
+
+        self.stop_btn["state"] = ACTIVE
+        self.start_btn["state"] = DISABLED
+
+        self.server = Daemon(DeviceHiveHandler, routes=routes, is_blocking=False)
+        self.server.start()
+
+        while not self.server.dh_status.connected:
+            # Wait till DH connection is ready
+            time.sleep(.001)
+            
+        self.server.deviceHive.handler.send(Initial)
+        
+
+    def stopClicked(self):
+        self.stop_btn["state"] = DISABLED
+        self.start_btn["state"] = ACTIVE
+        print('stop clicked')
+        self.server.stop()
+        self.window.destroy()
+
+    def create_widget(self):
+    
+        self.window.mainloop()
+
 if __name__ == '__main__':
-    server = Daemon(DeviceHiveHandler, routes=routes)
-    server.start()
+    prog = Widget()
+    prog.create_widget()
+    
