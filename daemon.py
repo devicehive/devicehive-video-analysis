@@ -37,7 +37,7 @@ class DeviceHiveHandler(Handler):
 
     def handle_connect(self):
         self._device = self.api.put_device(self._device_id)
-        self._device.send_notification("Begin", {"Initial":"start"})
+        # self._device.send_notification("Begin", {"Initial":"start"})
         super(DeviceHiveHandler, self).handle_connect()
 
     def send(self, data):
@@ -65,7 +65,7 @@ class Daemon(Server):
         self._detect_frame_data_id = 0
         self._cam_thread = threading.Thread(target=self._cam_loop, name='cam')
         self._cam_thread.setDaemon(True)
-        # self._surgery_meta = initialData
+        self._surgery_meta = None
 
     def _on_startup(self):
         self._cam_thread.start()
@@ -134,7 +134,7 @@ class Daemon(Server):
                 if predictions:
                     formatted = format_predictions(predictions)
                     logger.info('Predictions: {}'.format(formatted))
-                    self._send_dh(format_person_prediction(predictions))
+                    self._send_dh(format_notification(predictions))
 
                 frame_num += 1
 
@@ -143,11 +143,20 @@ class Daemon(Server):
             model.close()
 
     def _send_dh(self, data):
+        # set information about the surgery
+        if data["type"] == "start":
+            self._surgery_meta = data.data
+            return
+
         if not self.dh_status.connected:
             logger.error('Devicehive is not connected')
             return
-        print("sending")
-        self.deviceHive.handler.send(data)
+
+        payload = {
+            "meta": self._surgery_meta,
+            "predictions": data
+        }
+        self.deviceHive.handler.send(payload)
 
     def get_frame(self):
         return self._detect_frame_data, self._detect_frame_data_id
@@ -236,7 +245,7 @@ class Widget():
                 "doctor": self.doctor_field,
                 "patient": self.patient_field,
                 "procedure": self.procedure_field,
-                "packets": self.instrument_packets_field
+                "packets": self.instrument_packets_field,
             }
         }
 
@@ -249,7 +258,7 @@ class Widget():
         while not self.server.dh_status.connected:
             # Wait till DH connection is ready
             time.sleep(.001)
-            
+
         self.server.deviceHive.handler.send(Initial)
         
 
