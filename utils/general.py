@@ -41,8 +41,11 @@ def format_notification(predicts):
     result = []
     for p in predicts:
         result.append({key: p[key] for key in NOTIFICATION_KEYS})
-        print("YUH: ", p["class_name"])
-
+        
+    result = {
+        "type": "frame",
+        "predictions": result
+    }
     return result
 
 def format_person_prediction(predicts):
