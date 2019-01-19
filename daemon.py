@@ -34,6 +34,8 @@ logger = logging.getLogger('detector')
 class DeviceHiveHandler(Handler):
 
     _device = None
+    _surgery_meta = None
+    _payload = None
 
     def handle_connect(self):
         self._device = self.api.put_device(self._device_id)
@@ -41,6 +43,16 @@ class DeviceHiveHandler(Handler):
         super(DeviceHiveHandler, self).handle_connect()
 
     def send(self, data):
+        if data["type"] == "start":
+            self._surgery_meta = data["data"]
+            return
+
+        data = {
+            "meta": self._surgery_meta,
+            "data": data
+        }
+        print("NFDJKF:NDKFNDK:FN:")
+        print(data['data']["predictions"]["AR-10000"])
         if isinstance(data, str):
             notification = data
         else:
@@ -49,7 +61,9 @@ class DeviceHiveHandler(Handler):
             except TypeError:
                 notification = str(data)
 
-        self._device.send_notification("predictions", {"notifications":notification})
+        print(notification)
+        print(notification["data"])# ["predictions"]["AR-10000"]
+        self._device.send_notification("instruments", {"notifications":notification})
 
 
 class Daemon(Server):
@@ -58,14 +72,13 @@ class Daemon(Server):
     _detect_frame_data = None
     _detect_frame_data_id = None
     _cam_thread = None
-    _surgery_meta = None
+    
 
     def __init__(self, *args, **kwargs):
         super(Daemon, self).__init__(*args, **kwargs)
         self._detect_frame_data_id = 0
         self._cam_thread = threading.Thread(target=self._cam_loop, name='cam')
         self._cam_thread.setDaemon(True)
-        self._surgery_meta = None
 
     def _on_startup(self):
         self._cam_thread.start()
@@ -144,19 +157,12 @@ class Daemon(Server):
 
     def _send_dh(self, data):
         # set information about the surgery
-        if data["type"] == "start":
-            self._surgery_meta = data.data
-            return
-
         if not self.dh_status.connected:
             logger.error('Devicehive is not connected')
             return
 
-        payload = {
-            "meta": self._surgery_meta,
-            "predictions": data
-        }
-        self.deviceHive.handler.send(payload)
+        
+        self.deviceHive.handler.send(data)
 
     def get_frame(self):
         return self._detect_frame_data, self._detect_frame_data_id
@@ -245,7 +251,7 @@ class Widget():
                 "doctor": self.doctor_field,
                 "patient": self.patient_field,
                 "procedure": self.procedure_field,
-                "packets": self.instrument_packets_field,
+                "packets": self.instrument_packets_field
             }
         }
 

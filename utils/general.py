@@ -38,9 +38,15 @@ def format_predictions(predicts):
 
 
 def format_notification(predicts):
-    result = []
+    result = {
+        "AR-13970SRF": 0.0,
+        "AR-13975SR": 0.0,
+        "AR-10000": 0.0,
+    }
+    print("TEEEEST: ", predicts)
     for p in predicts:
-        result.append({key: p[key] for key in NOTIFICATION_KEYS})
+        result[p["class_name"]] = p["score"]
+        # result.append({key: p[key] for key in NOTIFICATION_KEYS})
         
     result = {
         "type": "frame",
