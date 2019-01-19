@@ -39,7 +39,6 @@ class DeviceHiveHandler(Handler):
 
     def handle_connect(self):
         self._device = self.api.put_device(self._device_id)
-        # self._device.send_notification("Begin", {"Initial":"start"})
         super(DeviceHiveHandler, self).handle_connect()
 
     def send(self, data):
@@ -55,15 +54,19 @@ class DeviceHiveHandler(Handler):
         print(data['data']["predictions"]["AR-10000"])
         if isinstance(data, str):
             notification = data
-        else:
-            try:
-                notification = json.dumps(data)
-            except TypeError:
-                notification = str(data)
+        # else:
+            # notification = json.dumps(data, encoding='UTF-8')
+            # try:
+            #     print("JSON")
+            #     notification = json.dumps(data)
+            # except TypeError:
+            #     print("STRING")
+            #     notification = str(data)
 
-        print(notification)
-        print(notification["data"])# ["predictions"]["AR-10000"]
-        self._device.send_notification("instruments", {"notifications":notification})
+        print("note: ", type(data))
+        print("note data: ", type(data["data"]))# ["predictions"]["AR-10000"]
+        # {"0":{"1":1}}
+        self._device.send_notification("instruments", {"notification":data})
 
 
 class Daemon(Server):
@@ -170,11 +173,6 @@ class Daemon(Server):
 
 class Widget():
     
-    # self.hospital_field = None
-    # self.doctor_field = None
-    # self.patient_field = None
-    # self.procedure_field = None
-    # self.instrument_packets_field = None
 
     def __init__(self):
         # self.server = None

@@ -45,7 +45,7 @@ def format_notification(predicts):
     }
     print("TEEEEST: ", predicts)
     for p in predicts:
-        result[p["class_name"]] = p["score"]
+        result[p["class_name"]] = float(p["score"])
         # result.append({key: p[key] for key in NOTIFICATION_KEYS})
         
     result = {
