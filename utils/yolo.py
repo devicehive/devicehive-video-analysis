@@ -99,9 +99,10 @@ def head(feats, anchors, num_classes):
 
     return box_xy, box_wh, box_confidence, box_class_probs
 
-
-def evaluate(yolo_outputs, image_shape, max_boxes=10, score_threshold=.6,
-             iou_threshold=.5):
+# score_threshold=.6,
+            #  iou_threshold=.5
+def evaluate(yolo_outputs, image_shape, max_boxes=10, score_threshold=.19,
+             iou_threshold=.13):
     """Evaluate YOLO model on given input batch and return filtered boxes."""
     box_xy, box_wh, box_confidence, box_class_probs = yolo_outputs
     boxes = boxes_to_corners(box_xy, box_wh)
