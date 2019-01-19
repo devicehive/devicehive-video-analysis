@@ -38,11 +38,29 @@ def format_predictions(predicts):
 
 
 def format_notification(predicts):
-    result = []
+    result = {
+        "AR-13970SRF": 0.0,
+        "AR-13975SR": 0.0,
+        "AR-10000": 0.0,
+    }
+    print("TEEEEST: ", predicts)
     for p in predicts:
-        result.append({key: p[key] for key in NOTIFICATION_KEYS})
-
+        result[p["class_name"]] = float(p["score"])
+        # result.append({key: p[key] for key in NOTIFICATION_KEYS})
+        
+    result = {
+        "type": "frame",
+        "predictions": result
+    }
     return result
+
+def format_person_prediction(predicts):
+    confidence = 0.0
+    for p in predicts:
+        if p["class_name"] == "person":
+            if p["score"] > confidence:
+                confidence = p['score']
+    return confidence
 
 def find_class_by_name(name, modules):
     modules = [getattr(module, name, None) for module in modules]

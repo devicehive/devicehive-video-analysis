@@ -18,10 +18,12 @@ import json
 import time
 import threading
 import logging.config
+from Tkinter import *
 from devicehive_webconfig import Server, Handler
 
+from subprocedure_sequence import demo_instruments
 from models.yolo import Yolo2Model
-from utils.general import format_predictions, format_notification
+from utils.general import format_predictions, format_notification, format_person_prediction
 from web.routes import routes
 from log_config import LOGGING
 
@@ -31,22 +33,41 @@ logger = logging.getLogger('detector')
 
 
 class DeviceHiveHandler(Handler):
+
     _device = None
+    _surgery_meta = None
+    _payload = None
 
     def handle_connect(self):
         self._device = self.api.put_device(self._device_id)
         super(DeviceHiveHandler, self).handle_connect()
 
     def send(self, data):
+        if data["type"] == "start":
+            self._surgery_meta = data["data"]
+            return
+
+        data = {
+            "meta": self._surgery_meta,
+            "data": data
+        }
+        print("NFDJKF:NDKFNDK:FN:")
+        print(data['data']["predictions"]["AR-10000"])
         if isinstance(data, str):
             notification = data
-        else:
-            try:
-                notification = json.dumps(data)
-            except TypeError:
-                notification = str(data)
+        # else:
+            # notification = json.dumps(data, encoding='UTF-8')
+            # try:
+            #     print("JSON")
+            #     notification = json.dumps(data)
+            # except TypeError:
+            #     print("STRING")
+            #     notification = str(data)
 
-        self._device.send_notification(notification)
+        print("note: ", type(data))
+        print("note data: ", type(data["data"]))# ["predictions"]["AR-10000"]
+        # {"0":{"1":1}}
+        self._device.send_notification("instruments", {"notification":data})
 
 
 class Daemon(Server):
@@ -55,6 +76,7 @@ class Daemon(Server):
     _detect_frame_data = None
     _detect_frame_data_id = None
     _cam_thread = None
+    
 
     def __init__(self, *args, **kwargs):
         super(Daemon, self).__init__(*args, **kwargs)
@@ -138,16 +160,195 @@ class Daemon(Server):
             model.close()
 
     def _send_dh(self, data):
+        # set information about the surgery
         if not self.dh_status.connected:
             logger.error('Devicehive is not connected')
             return
 
+        
         self.deviceHive.handler.send(data)
 
     def get_frame(self):
         return self._detect_frame_data, self._detect_frame_data_id
 
 
+class Widget():
+    
+
+    def __init__(self):
+        # self.server = None
+
+        self.window = Tk()
+        self.window.title("Assist-MD Capture")
+        self.window.geometry('500x400')
+
+        self.hospital_field = "Memorial Hospital"
+        self.doctor_field = "Dr. Humphreys"
+        self.patient_field = "David Roster"
+        self.procedure_field = "Appendectomy"
+        self.instrument_packets_field = 1
+
+        self.hospital_lbl = Label(self.window, text="Hospital Name: ")
+        self.hospital_lbl.grid(column=0, row=0)
+        v = StringVar(self.window, value=self.hospital_field)
+        self.hospital_txt = Entry(self.window,textvariable=v,width=20)
+        self.hospital_txt.grid(column=1, row=0)
+
+        self.doctor_lbl = Label(self.window, text="Doctor's Name: ")
+        self.doctor_lbl.grid(column=0, row=1)
+        v = StringVar(self.window, value=self.doctor_field)
+        self.doctor_txt = Entry(self.window,textvariable=v,width=20)
+        self.doctor_txt.grid(column=1, row=1)
+
+        self.patient_lbl = Label(self.window, text="Patient's Name: ")
+        self.patient_lbl.grid(column=0, row=2)
+        v = StringVar(self.window, value=self.patient_field)
+        self.patient_txt = Entry(self.window,textvariable=v,width=20)
+        self.patient_txt.grid(column=1, row=2)
+
+        self.procedure_lbl = Label(self.window, text="Procedure: ")
+        self.procedure_lbl.grid(column=0, row=3)
+        v = StringVar(self.window, value=self.procedure_field)
+        self.procedure_txt = Entry(self.window,textvariable=v,width=20)
+        self.procedure_txt.grid(column=1, row=3)
+
+        self.instruments_lbl = Label(self.window, text="Number of Packets: ")
+        self.instruments_lbl.grid(column=0, row=4)
+        v = StringVar(self.window, value=self.instrument_packets_field)
+        self.instruments_txt = Entry(self.window,textvariable=v,width=20)
+        self.instruments_txt.grid(column=1, row=4)
+
+        # self.demo1_lbl = Label(self.window, text="Instrument set 1: ")
+        # self.demo1_lbl.grid(column=0, row=6)
+        # self.var1 = IntVar()
+        # self.demo1_chk = Checkbutton(self.window, command=self.checkBoxClicked, variable=self.var1)
+        # self.demo1_chk.grid(column=1, row=6)
+
+        # self.demo2_lbl = Label(self.window, text="Instrument set 2: ")
+        # self.demo2_lbl.grid(column=0, row=7)
+        # self.var2 = IntVar()
+        # self.demo2_chk = Checkbutton(self.window, command=self.checkBoxClicked, text="male", variable=self.var2)
+        # self.demo2_chk.grid(column=1, row=7)
+
+        # self.demo3_lbl = Label(self.window, text="Instrument set 3: ")
+        # self.demo3_lbl.grid(column=0, row=8)
+        # self.var3 = IntVar()
+        # self.demo3_chk = Checkbutton(self.window, command=self.checkBoxClicked, text="male", variable=self.var3)
+        # self.demo3_chk.grid(column=1, row=8)
+
+        self.radiovar = IntVar()
+
+        self.demo1_lbl = Label(self.window, text="Instrument set 1: ")
+        self.demo1_lbl.grid(column=0, row=6)
+        self.demo1_chk = Radiobutton(
+            self.window, 
+            text="Option 1", 
+            variable=self.radiovar, 
+            value=1,
+            command=self.checkBoxClicked)
+        self.demo1_chk.grid(column=1, row=6)
+
+        self.demo2_lbl = Label(self.window, text="Instrument set 2: ")
+        self.demo2_lbl.grid(column=0, row=7)
+        self.demo2_chk = Radiobutton(
+            self.window, 
+            text="Option 2", 
+            variable=self.radiovar, 
+            value=2,
+            command=self.checkBoxClicked)
+        self.demo2_chk.grid(column=1, row=7)
+
+        self.demo3_lbl = Label(self.window, text="Instrument set 3: ")
+        self.demo3_lbl.grid(column=0, row=8)
+        self.demo3_chk = Radiobutton(
+            self.window, 
+            text="Option 3", 
+            variable=self.radiovar, 
+            value=3,
+            command=self.checkBoxClicked)
+        self.demo3_chk.grid(column=1, row=8)
+
+        
+
+        self.startButtonState = ACTIVE
+        self.stopButtonState = DISABLED
+        
+        self.start_btn = Button(
+            self.window, 
+            text="Start Capture", 
+            command=self.startClicked,
+            state=self.startButtonState)
+        self.start_btn.grid(column=2, row=0)
+
+        self.stop_btn = Button(
+            self.window, 
+            text="Stop Capture", 
+            command=self.stopClicked,
+            state=self.stopButtonState)
+        self.stop_btn.grid(column=2, row=1)
+
+        self.instru_lbl = Label(self.window, text="Instrument In Use: ")
+        self.instru_lbl.grid(column=0, row=9)
+        self.instruments_in_use_box = Text(self.window, height=6, width=20)
+        self.instruments_in_use_box.grid(column=0, row=10)
+        self.instruments_in_use = None
+   
+
+    def startClicked(self):
+        print("starting server")
+        self.hospital_field = self.hospital_txt.get()
+        self.doctor_field = self.doctor_txt.get()
+        self.patient_field = self.patient_txt.get()
+        self.procedure_field = self.patient_txt.get()
+        self.instrument_packets_field = self.instruments_txt.get()
+
+        Initial = {
+            "type": "start",
+            "data": {
+                "hospital": self.hospital_field,
+                "doctor": self.doctor_field,
+                "patient": self.patient_field,
+                "procedure": self.procedure_field,
+                "packets": self.instrument_packets_field
+            }
+        }
+
+        self.stop_btn["state"] = ACTIVE
+        self.start_btn["state"] = DISABLED
+
+        self.server = Daemon(DeviceHiveHandler, routes=routes, is_blocking=False)
+        self.server.start()
+
+        while not self.server.dh_status.connected:
+            # Wait till DH connection is ready
+            time.sleep(.001)
+
+        self.server.deviceHive.handler.send(Initial)
+        
+
+    def stopClicked(self):
+        self.stop_btn["state"] = DISABLED
+        self.start_btn["state"] = ACTIVE
+        print('stop clicked')
+        self.server.stop()
+        self.window.destroy()
+
+    def checkBoxClicked(self):
+        self.instruments_in_use = demo_instruments["instruments"][self.radiovar.get()-1]
+        print("The instruments are: ", self.instruments_in_use)
+
+        self.instruments_in_use_box.delete('1.0', END)
+        for instrument in self.instruments_in_use:
+            self.instruments_in_use_box.insert(END, instrument + '\n')
+            print(instrument)
+        
+
+
+    def create_widget(self):
+    
+        self.window.mainloop()
+
 if __name__ == '__main__':
-    server = Daemon(DeviceHiveHandler, routes=routes)
-    server.start()
+    prog = Widget()
+    prog.create_widget()
+    
