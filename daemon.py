@@ -21,6 +21,7 @@ import logging.config
 from Tkinter import *
 from devicehive_webconfig import Server, Handler
 
+from subprocedure_sequence import demo_instruments
 from models.yolo import Yolo2Model
 from utils.general import format_predictions, format_notification, format_person_prediction
 from web.routes import routes
@@ -179,7 +180,7 @@ class Widget():
 
         self.window = Tk()
         self.window.title("Assist-MD Capture")
-        self.window.geometry('500x200')
+        self.window.geometry('500x400')
 
         self.hospital_field = "Memorial Hospital"
         self.doctor_field = "Dr. Humphreys"
@@ -217,6 +218,58 @@ class Widget():
         self.instruments_txt = Entry(self.window,textvariable=v,width=20)
         self.instruments_txt.grid(column=1, row=4)
 
+        # self.demo1_lbl = Label(self.window, text="Instrument set 1: ")
+        # self.demo1_lbl.grid(column=0, row=6)
+        # self.var1 = IntVar()
+        # self.demo1_chk = Checkbutton(self.window, command=self.checkBoxClicked, variable=self.var1)
+        # self.demo1_chk.grid(column=1, row=6)
+
+        # self.demo2_lbl = Label(self.window, text="Instrument set 2: ")
+        # self.demo2_lbl.grid(column=0, row=7)
+        # self.var2 = IntVar()
+        # self.demo2_chk = Checkbutton(self.window, command=self.checkBoxClicked, text="male", variable=self.var2)
+        # self.demo2_chk.grid(column=1, row=7)
+
+        # self.demo3_lbl = Label(self.window, text="Instrument set 3: ")
+        # self.demo3_lbl.grid(column=0, row=8)
+        # self.var3 = IntVar()
+        # self.demo3_chk = Checkbutton(self.window, command=self.checkBoxClicked, text="male", variable=self.var3)
+        # self.demo3_chk.grid(column=1, row=8)
+
+        self.radiovar = IntVar()
+
+        self.demo1_lbl = Label(self.window, text="Instrument set 1: ")
+        self.demo1_lbl.grid(column=0, row=6)
+        self.demo1_chk = Radiobutton(
+            self.window, 
+            text="Option 1", 
+            variable=self.radiovar, 
+            value=1,
+            command=self.checkBoxClicked)
+        self.demo1_chk.grid(column=1, row=6)
+
+        self.demo2_lbl = Label(self.window, text="Instrument set 2: ")
+        self.demo2_lbl.grid(column=0, row=7)
+        self.demo2_chk = Radiobutton(
+            self.window, 
+            text="Option 2", 
+            variable=self.radiovar, 
+            value=2,
+            command=self.checkBoxClicked)
+        self.demo2_chk.grid(column=1, row=7)
+
+        self.demo3_lbl = Label(self.window, text="Instrument set 3: ")
+        self.demo3_lbl.grid(column=0, row=8)
+        self.demo3_chk = Radiobutton(
+            self.window, 
+            text="Option 3", 
+            variable=self.radiovar, 
+            value=3,
+            command=self.checkBoxClicked)
+        self.demo3_chk.grid(column=1, row=8)
+
+        
+
         self.startButtonState = ACTIVE
         self.stopButtonState = DISABLED
         
@@ -233,6 +286,13 @@ class Widget():
             command=self.stopClicked,
             state=self.stopButtonState)
         self.stop_btn.grid(column=2, row=1)
+
+        self.instru_lbl = Label(self.window, text="Instrument In Use: ")
+        self.instru_lbl.grid(column=0, row=9)
+        self.instruments_in_use_box = Text(self.window, height=6, width=20)
+        self.instruments_in_use_box.grid(column=0, row=10)
+        self.instruments_in_use = None
+   
 
     def startClicked(self):
         print("starting server")
@@ -272,6 +332,17 @@ class Widget():
         print('stop clicked')
         self.server.stop()
         self.window.destroy()
+
+    def checkBoxClicked(self):
+        self.instruments_in_use = demo_instruments["instruments"][self.radiovar.get()-1]
+        print("The instruments are: ", self.instruments_in_use)
+
+        self.instruments_in_use_box.delete('1.0', END)
+        for instrument in self.instruments_in_use:
+            self.instruments_in_use_box.insert(END, instrument + '\n')
+            print(instrument)
+        
+
 
     def create_widget(self):
     
