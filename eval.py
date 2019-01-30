@@ -18,6 +18,7 @@ import logging.config
 import cv2
 import pafy
 import tensorflow as tf
+import os
 
 from models import yolo
 from log_config import LOGGING
@@ -38,6 +39,8 @@ def evaluate(_):
     if is_url(video):
         videoPafy = pafy.new(video)
         video = videoPafy.getbest(preftype="mp4").url
+        cam = cv2.VideoCapture(video)
+    elif os.path.isfile(video):
         cam = cv2.VideoCapture(video)
     else:
         cam = cv2.VideoCapture(0)
