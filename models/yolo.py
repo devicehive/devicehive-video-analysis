@@ -14,6 +14,7 @@
 
 
 import tensorflow as tf
+from tensorflow import keras
 
 from models.base import BaseModel
 from utils import yolo, general
@@ -98,9 +99,21 @@ class YoloBaseModel(BaseModel):
         self._raw_inp = raw_inp
         self._raw_out = raw_out
         self._eval_inp = eval_inp
+        self._eval_out = eval_out
 
         self._sess.run(tf.global_variables_initializer())
 
+    def save(self):
+        export_path = './2'
+        print('Exporting trained model to', export_path)
+        #builder = tf.saved_model.builder.SavedModelBuilder(export_path)
+        tf.saved_model.simple_save(
+            self._sess,
+            export_path,
+            inputs={'input_image': self._eval_inp},
+            outputs={'output': self._eval_out})
+
+        
     def close(self):
         self._sess.close()
 
